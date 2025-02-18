@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Support System Infrastructure'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'development'
+    AllowedValues:
+      - 'development'
+      - 'staging'
+      - 'production'
+    Description: 'Environment for the support system'
+
+Resources:
+  # ... (previous resources remain the same)
+
+  # Update the API Gateway Method to allow unauthenticated access
+  CreateTicketMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref SupportAPI
+      ResourceId: !Ref TicketsResource
+      HttpMethod: POST
+      AuthorizationType: NONE  # This allows unauthenticated access
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 
+          - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations'
+          - LambdaArn: !GetAtt TicketProcessorFunction.Arn
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: 'Empty'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+      Options:
+        CorsConfiguration:
+          AllowMethods:
+            - POST
+          AllowHeaders:
+            - Content-Type
+          AllowOrigin: '*'
+
+  # Add CORS support
+  TicketsResourceCORS:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref SupportAPI
+      ResourceId: !Ref TicketsResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: 'Empty'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+Outputs:
+  ApiEndpoint:
+    Description: 'API Gateway endpoint URL for ${Environment} environment'
+    Value: !Sub 'https://${SupportAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/tickets'
