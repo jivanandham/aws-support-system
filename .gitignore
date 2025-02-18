@@ -1,0 +1,23 @@
+cat > .gitignore << 'EOF'
+# Node.js dependencies
+node_modules/
+
+# AWS deployment artifacts
+packaged.yaml
+
+# Zip files
+*.zip
+
+# Environment variables
+.env
+
+# MacOS system files
+.DS_Store
+
+# Log files
+*.log
+
+# IDE specific files
+.idea/
+.vscode/
+EOF
