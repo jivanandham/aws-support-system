@@ -1,0 +1,39 @@
+name: Test AWS Support System
+
+# This workflow runs on every push to any branch and when pull requests are made
+on:
+  push:
+    branches: [ main, development ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository code
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      # Install dependencies for the Lambda function
+      - name: Install dependencies
+        working-directory: src/functions/ticket-processor
+        run: npm install
+
+      # Run tests
+      - name: Run tests
+        working-directory: src/functions/ticket-processor
+        run: |
+          # Add test command here once you have tests set up
+          echo "Running tests..."
+          npm test
